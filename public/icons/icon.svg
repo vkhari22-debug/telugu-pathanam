@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="102" fill="#7a3e12"/>
+  <g fill="#fff4e0">
+    <path d="M246 268 L102 318 L102 440 L246 390 Z"/>
+    <path d="M266 268 L410 318 L410 440 L266 390 Z"/>
+  </g>
+  <g fill="none" stroke="#fff4e0" stroke-width="22" stroke-linecap="round">
+    <path d="M200 196 A70 70 0 0 1 312 196"/>
+    <path d="M160 152 A126 126 0 0 1 352 152"/>
+  </g>
+  <text x="256" y="255" text-anchor="middle" font-family="Noto Sans Telugu, Nirmala UI, sans-serif" font-size="96" font-weight="700" fill="#fff4e0">తె</text>
+</svg>
