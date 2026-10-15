@@ -4,7 +4,7 @@ Telugu Word (.docx), EPUB and text (.txt) documents ను అధ్యాయా
 వినడానికి ఒక వెబ్ యాప్ (PWA). డాక్యుమెంట్లు మీ ఫోన్ బ్రౌజర్‌లోనే ఉంటాయి — ఎక్కడికీ అప్‌లోడ్ కావు.
 
 - 🌐 **యాప్ తెరవండి:** https://vkhari22-debug.github.io/telugu-pathanam/
-  (మొదటి deploy పూర్తయ్యాక పని చేస్తుంది; ప్రచురణ స్థితి READMEలోని Deployment విభాగంలో చూడండి.)
+  (ఇప్పుడు అందుబాటులో ఉంది.)
 - ⚠️ పరిమితులు: [docs/LIMITATIONS.md](docs/LIMITATIONS.md)
 - ✅ టెస్ట్ చెక్‌లిస్ట్: [docs/TESTING.md](docs/TESTING.md)
 
