@@ -18,6 +18,19 @@ PWA (home-screen app) does **not** remove any of these limits.
 
 ### Gemini API key safety
 
+The explicit API-key test performs one short real synthesis request without playback. Success
+only proves that the selected key/model/voice worked at that moment, not that enough quota
+exists for an entire book. It does not inspect billing tier or remaining quota.
+
+Download cost estimates use Standard paid rates verified against
+https://ai.google.dev/gemini-api/docs/pricing on 2026-10-16: input $0.50/million text tokens,
+output $9/million audio tokens (Flash) or $6 (Flash-Lite), with 25 audio tokens/second.
+Announced rates double on 2027-01-01. Duration assumes 110–170 whitespace-delimited words/minute;
+input assumes one token per 1–4 Unicode code points. These are rough assumptions, not Telugu
+tokenization measurements. Actual charges may be outside the displayed range; taxes, retries,
+other usage, and exchange fees are excluded. Optional INR conversion uses the user's entered
+exchange rate, not a live rate. Free Tier may cost nothing within its available quota.
+
 The Gemini key is held in page memory only and is **not** written to IndexedDB, local storage,
 or the URL. Reloading the page clears it. However, a browser-direct API key is not a secret from
 the person/browser running the page and can be seen in developer tools/network instrumentation.

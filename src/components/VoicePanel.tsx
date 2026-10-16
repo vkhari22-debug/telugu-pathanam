@@ -3,6 +3,7 @@ import type { Settings } from '../types';
 import { sortVoices } from '../tts/deviceBackend';
 import { isTeluguVoice } from '../tts/useVoices';
 import { validateEndpoint } from '../tts/cloudBackend';
+import { GeminiKeyTest } from './GeminiKeyTest';
 
 interface Props {
   settings: Settings;
@@ -119,6 +120,7 @@ export function VoicePanel({
             Google AI Studioలో restrictions/ఖర్చు పరిమితులు పెట్టండి. బహిరంగ వెబ్‌సైట్‌లో key పెట్టవద్దు.
             Play బటన్ ద్వారా చిన్న వాక్యాన్ని Gemini APIకి పంపి నిజమైన వాయిస్ పరీక్ష జరుగుతుంది.
           </p>
+          <GeminiKeyTest apiKey={geminiApiKey} model={settings.geminiModel} voice={settings.geminiVoice} />
         </div>
       )}
 

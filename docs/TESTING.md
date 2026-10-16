@@ -10,7 +10,7 @@ is PHYSICAL yet**. Registering Media Session handlers is *not* counted as hardwa
 
 ## Automated results
 
-Run: `npm test` (48 unit tests) and `npm run test:e2e` (7 browser tests). Both run in CI.
+Run: `npm test` (52 unit tests) and `npm run test:e2e` (8 browser tests). Both run in CI.
 
 | Requirement | Status | Test |
 |---|---|---|
@@ -37,6 +37,8 @@ Run: `npm test` (48 unit tests) and `npm run test:e2e` (7 browser tests). Both r
 | Gemini key is not persisted after reload | AUTO (emulated browser) | `app.spec.ts` |
 | Chapter download range, sequential Gemini requests, one WAV download, silent mode/player | AUTO (mocked API) | `app.spec.ts` |
 | Concatenated WAV headers/data and incompatible-format rejection | AUTO | `wav.test.ts` |
+| Document/chapter cost assumptions, rates, request counts and 2027 price change | AUTO | `geminiCost.test.ts` |
+| Silent key test success, missing key, quota error, USD/INR estimate | AUTO (mocked API) | `app.spec.ts` |
 | Search, bookmarks, delete, unsupported-file errors | AUTO | `app.spec.ts` |
 | Mobile layout (no horizontal overflow, large controls) | AUTO (emulated) | `app.spec.ts` |
 | Offline application loading (service worker) | AUTO | `app.spec.ts` |

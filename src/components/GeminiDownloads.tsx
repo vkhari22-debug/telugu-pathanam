@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PronunciationRule, StoredDocument } from '../types';
-import { applyPronunciations, segmentText } from '../tts/segment';
+import { downloadSegments, estimateGeminiCost } from '../tts/geminiCost';
 import { synthesizeGeminiWav } from '../tts/geminiBackend';
 import { concatenateWav } from '../tts/wav';
+import { GeminiKeyTest } from './GeminiKeyTest';
 
 interface Props {
   doc: StoredDocument;
@@ -41,6 +42,7 @@ export function GeminiDownloads({ doc, apiKey, model, voice, rate, pronunciation
   const [error, setError] = useState<string | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [audioTitle, setAudioTitle] = useState('');
+  const [exchangeRate, setExchangeRate] = useState('');
   const abortRef = useRef<AbortController | null>(null);
   const audioUrlRef = useRef<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -63,10 +65,7 @@ export function GeminiDownloads({ doc, apiKey, model, voice, rate, pronunciation
       return;
     }
     onPrepare();
-    const texts = doc.paragraphs
-      .slice(scope.start, scope.end)
-      .map((paragraph) => applyPronunciations(paragraph.text, pronunciations))
-      .flatMap((paragraph) => segmentText(paragraph));
+    const texts = downloadSegments(doc.paragraphs.slice(scope.start, scope.end), pronunciations);
     if (texts.length === 0) {
       setError('ఈ భాగంలో చదవదగిన పాఠ్యం లేదు.');
       return;
@@ -91,6 +90,7 @@ export function GeminiDownloads({ doc, apiKey, model, voice, rate, pronunciation
         chunks.push(await wav.arrayBuffer());
         setProgress({ done: i + 1, total: texts.length });
       }
+      if (abort.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
       const output = concatenateWav(chunks);
       const url = URL.createObjectURL(output);
       const anchor = document.createElement('a');
@@ -114,9 +114,38 @@ export function GeminiDownloads({ doc, apiKey, model, voice, rate, pronunciation
   };
 
   const scopes = doc.chapters.map((chapter, index) => ({ ...chapterScope(doc, index), level: chapter.level, key: `${chapter.paragraphIndex}-${index}` }));
+  const estimate = estimateGeminiCost(downloadSegments(doc.paragraphs, pronunciations), model);
+  const rupees = Number(exchangeRate);
+  const formatCost = (low: number, high: number) => `$${low.toFixed(4)} – $${high.toFixed(4)} USD${rupees > 0 && Number.isFinite(rupees) ? ` (సుమారు ₹${(low * rupees).toFixed(2)} – ₹${(high * rupees).toFixed(2)})` : ''}`;
 
   return (
     <section className="stack" aria-label="Gemini ఆడియో డౌన్‌లోడ్">
+      <div className="card stack">
+        <h3>మొత్తం డాక్యుమెంట్ — ఒక్క WAV ఫైల్</h3>
+        <p>ప్రతి పేరాను విడిగా నొక్కాల్సిన అవసరం లేదు. అన్ని పేరాలు వరుసగా తయారై ఒకే ఫైల్‌గా డౌన్‌లోడ్ అవుతాయి.</p>
+        {estimate && (
+          <div data-testid="document-cost">
+            <strong>మొత్తం డాక్యుమెంట్ అంచనా ఖర్చు: {formatCost(estimate.usdLow, estimate.usdHigh)}</strong>
+            <p>{estimate.words} పదాలు · సుమారు {Math.ceil(estimate.minutesLow)}–{Math.ceil(estimate.minutesHigh)} నిమిషాలు · {estimate.requests} API requests</p>
+          </div>
+        )}
+        <label className="field">
+          <span>రూపాయల్లో చూడటానికి: 1 USD = ఎన్ని ₹? (ఐచ్ఛికం)</span>
+          <input type="number" min="0" step="0.01" value={exchangeRate} onChange={(event) => setExchangeRate(event.target.value)} />
+        </label>
+        <p className="muted small">
+          ఇది paid Standard API ధరలతో ప్రణాళిక అంచనా మాత్రమే, బిల్లు లేదా గరిష్ఠ పరిమితి కాదు.
+          నిమిషానికి 110–170 పదాలు, 1–4 Unicode అక్షరాలకు ఒక input token, సెకనుకు 25 audio tokensగా ఊహించాం.
+          తెలుగు tokenization, విరామాలు, retries, పన్నులు వల్ల అసలు ఖర్చు ఈ పరిధికి బయట కూడా ఉండవచ్చు.
+          Free Tierలో quota ఉంటే ఛార్జీ లేకపోవచ్చు; ఈ యాప్ మీ billing tier/quota చూడలేదు.
+          ధరలు 2026-10-16న తనిఖీ చేశాం; 2027-01-01 నుంచి ప్రకటించిన కొత్త ధరలు లెక్కలో వర్తిస్తాయి.
+          <a href="https://ai.google.dev/gemini-api/docs/pricing" target="_blank" rel="noreferrer"> Google తాజా ధరలు</a>.
+        </p>
+        <button type="button" className="primary" onClick={() => void generate({ title: 'పూర్తి డాక్యుమెంట్', start: 0, end: doc.paragraphs.length })} disabled={!!activeTitle}>
+          📥 పూర్తి డాక్యుమెంట్ WAV డౌన్‌లోడ్
+        </button>
+      </div>
+      <GeminiKeyTest apiKey={apiKey} model={model} voice={voice} />
       <p className="notice small">
         ఎంపిక చేసిన భాగం Geminiకి పేరా-పేరాగా పంపబడుతుంది; ఒక్కో భాగానికి API quota/ఖర్చు ఉండవచ్చు.
         తయారీ క్రమంగా జరుగుతుంది, మధ్యలో రద్దు చేయవచ్చు. డౌన్‌లోడ్ ఒక WAV ఫైల్‌గా కలుస్తుంది.
@@ -133,7 +162,13 @@ export function GeminiDownloads({ doc, apiKey, model, voice, rate, pronunciation
             {scopes.map((scope) => (
               <li key={scope.key} style={{ paddingInlineStart: `${(Math.min(scope.level, 6) - 1) * 0.8}rem` }}>
                 <div className="row">
-                  <span className="grow">{scope.title}</span>
+                  <span className="grow">
+                    {scope.title}
+                    {(() => {
+                      const cost = estimateGeminiCost(downloadSegments(doc.paragraphs.slice(scope.start, scope.end), pronunciations), model);
+                      return cost && <small className="muted"> · {formatCost(cost.usdLow, cost.usdHigh)}</small>;
+                    })()}
+                  </span>
                   <button type="button" onClick={() => void generate(scope)} disabled={!!activeTitle}>
                     ⬇ డౌన్‌లోడ్
                   </button>
@@ -143,10 +178,6 @@ export function GeminiDownloads({ doc, apiKey, model, voice, rate, pronunciation
           </ul>
         </div>
       )}
-
-      <button type="button" className="primary" onClick={() => void generate({ title: 'పూర్తి డాక్యుమెంట్', start: 0, end: doc.paragraphs.length })} disabled={!!activeTitle}>
-        📥 పూర్తి డాక్యుమెంట్ WAV డౌన్‌లోడ్
-      </button>
 
       {activeTitle && progress && (
         <div role="status" aria-live="polite">

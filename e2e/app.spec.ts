@@ -222,6 +222,14 @@ test('Gemini downloads a chapter silently as one playable WAV', async ({ page })
   await page.getByLabel(/Gemini API key/).fill('test-key');
   await page.keyboard.press('Escape');
   await page.getByRole('button', { name: /ఆడియో డౌన్‌లోడ్/ }).click();
+  await expect(page.getByTestId('document-cost')).toContainText('USD');
+  await expect(page.getByTestId('document-cost')).toContainText('8 API requests');
+  await page.getByLabel(/రూపాయల్లో చూడటానికి/).fill('85');
+  await expect(page.getByTestId('document-cost')).toContainText('₹');
+  await page.getByRole('button', { name: 'Gemini API key పరీక్షించు', exact: true }).click();
+  await expect(page.getByText(/పరీక్ష విజయవంతం:/)).toBeVisible();
+  expect(sentTexts).toEqual(['నమస్కారం.']);
+  sentTexts.length = 0;
   await expect(page.getByRole('checkbox', { name: /మౌనంగా తయారు/ })).toBeChecked();
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: '⬇ డౌన్‌లోడ్' }).first().click();
@@ -251,6 +259,21 @@ test('Gemini downloads a chapter silently as one playable WAV', async ({ page })
     'రెండవ పాఠంలో మొదటి పేరా.',
     'రెండవ పాఠంలో రెండవ పేరా.',
   ]);
+});
+
+test('Gemini key test reports missing key and quota errors without claiming success', async ({ page }) => {
+  await page.goto('./');
+  await page.getByRole('button', { name: 'సెట్టింగ్‌లు, సహాయం' }).click();
+  await page.getByRole('button', { name: /వాయిస్ ఎంచుకోండి/ }).click();
+  await page.getByRole('radio', { name: /Gemini TTS/ }).check();
+  await page.getByRole('button', { name: 'Gemini API key పరీక్షించు', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('ముందుగా Gemini API key');
+  await page.getByLabel(/Gemini API key/).fill('test-key');
+  await page.route('https://generativelanguage.googleapis.com/v1beta/interactions', (route) =>
+    route.fulfill({ status: 429, contentType: 'application/json', body: JSON.stringify({ error: { message: 'Rate limit exceeded on Free Tier' } }) }));
+  await page.getByRole('button', { name: 'Gemini API key పరీక్షించు', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Rate limit exceeded on Free Tier');
+  await expect(page.getByText(/పరీక్ష విజయవంతం:/)).toHaveCount(0);
 });
 
 test('application shell loads offline after the first visit', async ({ page, context }) => {
